@@ -9,6 +9,8 @@ import struct
 import subprocess
 from prepare_install_layout import SYSTEM_UUID, command, fixture_container, mount_volume
 
+DATA_PROTECTION_SHA256 = 'efde4ed4455c653e8bc2b653edd1e120d6a2b967b3a07212a504e0d33548e215'
+
 MARKERS = (b'DIAGNOSTICS MODE ENABLED, SKIP INIT', b'DEVICE HAS EPHEMERAL DATA VOLUME',
            b'No SEP present', b'Gigalocker', b'MKBInitialize')
 
@@ -169,6 +171,34 @@ def inspect_bytes(data, *, cache=False):
     return {'bytes': len(data), 'markers': found, 'binary_exported': False}
 
 
+def data_protection_windows(data):
+    """Only short original argument/provisioning code windows, exact image gate."""
+    if hashlib.sha256(data).hexdigest() != DATA_PROTECTION_SHA256:
+        raise ValueError('unsupported original data-protection image')
+    from analyze_firmware import macho
+    from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+    segments = macho(data)['segments']
+    decoder = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+    windows = []
+    # Original report identifies usage at 0x10000472c and Gigalocker
+    # initialization at 0x1000097c4. Resolve only these bounded file-backed
+    # windows; no executable, data pages or key material are retained.
+    for address, size in ((0x10000472c, 256), (0x10000482c, 256),
+                          (0x10000492c, 256), (0x1000097c4, 256),
+                          (0x10000a9cc, 256)):
+        owners = [s for s in segments if int(s['address'], 16) <= address and
+                  address + size <= int(s['address'], 16) + s['file_size']]
+        if len(owners) != 1:
+            raise ValueError('provisioning window exceeds original image')
+        segment = owners[0]
+        offset = segment['offset'] + address - int(segment['address'], 16)
+        instructions = [{'address': hex(ins.address), 'mnemonic': ins.mnemonic,
+                         'operands': ins.op_str}
+                        for ins in decoder.disasm(data[offset:offset+size], address)]
+        windows.append({'address': hex(address), 'instructions': instructions})
+    return {'read_only': True, 'binary_exported': False, 'windows': windows}
+
+
 def inspect(image):
     root = pathlib.Path.cwd().resolve() / '.firmware'
     image = pathlib.Path(image).resolve()
@@ -201,6 +231,8 @@ def inspect(image):
             with candidate.open('rb') as stream:
                 with mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as data:
                     item = {'path': str(candidate.relative_to(source)), 'sha256': hashlib.sha256(data).hexdigest()}
+                    if candidate.name == 'init_data_protection' and item['sha256'] == DATA_PROTECTION_SHA256:
+                        item['gigalocker_provisioning'] = data_protection_windows(data)
                     try: item.update(inspect_bytes(data, cache=candidate.name.startswith('dyld_shared_cache')))
                     except ValueError as error: item['unsupported_layout'] = str(error)
                     report['files'].append(item)

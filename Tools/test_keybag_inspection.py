@@ -45,6 +45,11 @@ class KeybagInspectionTests(unittest.TestCase):
         self.assertEqual(result['markers'][0]['address'], '0x180000100')
         self.assertEqual(result['markers'][0]['references'][0]['address'], '0x180000080')
 
+    def test_provisioning_windows_reject_unverified_images(self):
+        from inspect_keybag_host import data_protection_windows
+        with self.assertRaisesRegex(ValueError, 'unsupported original'):
+            data_protection_windows(bytes(4096))
+
     def test_unrelated_image_never_attached(self):
         with patch('inspect_keybag_host.command') as command:
             with self.assertRaisesRegex(ValueError, 'isolated'): inspect('other.raw')
