@@ -8,13 +8,15 @@ import secrets
 from analyze_firmware import device_tree
 
 
-def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, dram_size=2 * 1024 * 1024 * 1024, research_bridge_handoff=False, research_internal_storage=False, research_fastsim=False, research_no_sep=False, research_keybag_diagnostics=False, research_sep_manager_probe=False):
+def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, dram_size=2 * 1024 * 1024 * 1024, research_bridge_handoff=False, research_internal_storage=False, research_fastsim=False, research_no_sep=False, research_keybag_diagnostics=False, research_sep_manager_probe=False, research_disabled_aks=False):
     if not 1_000_000 <= counter_frequency <= 1_000_000_000:
         raise ValueError("invalid counter frequency")
     if research_no_sep and not research_fastsim:
         raise ValueError('no-SEP diagnostic requires explicit FastSim identity')
     if research_keybag_diagnostics and not research_no_sep:
         raise ValueError('keybag diagnostic requires explicit no-SEP experiment')
+    if research_disabled_aks and not research_sep_manager_probe:
+        raise ValueError('disabled AKS requires explicit SEP manager transport probe')
     if research_sep_manager_probe and not (research_no_sep and research_keybag_diagnostics):
         raise ValueError('SEP manager probe requires explicit no-SEP/keybag diagnostics')
     original_nodes = device_tree(data)  # Validate bounds/depth before rewriting.
@@ -261,8 +263,19 @@ def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, 
         if research_no_sep and path == '/device-tree/arm-io/sep':
             if names.get(b'compatible') != b'iop,t8010\0iop,s8000\0':
                 raise ValueError('no-SEP diagnostic requires original T8010 SEP node')
+            if research_disabled_aks:
+                # Keep the original matching identity for the passive manager,
+                # under an explicit research alias outside the original SEP path.
+                # Original init_data_protection must choose its no-SEP branch;
+                # original AKS is separately disabled through aks-endpoint=0.
+                position = next(i for i, (key, _) in enumerate(properties)
+                                if key.split(b'\0')[0] == b'name')
+                if properties[position][1].rstrip(b'\0') != b'sep':
+                    raise ValueError('unexpected original SEP node name')
+                properties[position] = (properties[position][0], b'sep-research-manager\0')
             changes.append({'path': path, 'property': 'node',
-                            'action': 'retain-for-transport-probe' if research_sep_manager_probe else 'omit',
+                            'action': 'alias-for-disabled-aks' if research_disabled_aks else
+                                      'retain-for-transport-probe' if research_sep_manager_probe else 'omit',
                             'source': 'explicit research platform without implemented SEP',
                             'sep_data_protection_confirmed': False})
             if not research_sep_manager_probe:
@@ -290,6 +303,6 @@ def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, 
         raise ValueError('original internal storage endpoint missing')
     if research_fastsim and not any(c.get('value') == 'FastSim' for c in changes):
         raise ValueError('original product node missing for FastSim diagnostic')
-    if research_no_sep and not any(c.get('action') == ('retain-for-transport-probe' if research_sep_manager_probe else 'omit') for c in changes):
+    if research_no_sep and not any(c.get('action') == ('alias-for-disabled-aks' if research_disabled_aks else 'retain-for-transport-probe' if research_sep_manager_probe else 'omit') for c in changes):
         raise ValueError('original SEP node missing for no-SEP diagnostic')
     return prepared, changes

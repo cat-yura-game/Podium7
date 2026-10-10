@@ -66,6 +66,21 @@ class QEMUProbeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'SEP manager probe'):
                 make_probe(Path('nonexistent'), research_sep_manager_probe=True, **profile)
 
+    def test_original_aks_disable_is_research_only_and_default_is_preserved(self):
+        from pathlib import Path
+        from qemu_probe import make_probe
+        inputs = (0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000)
+        normal = boot_args(*inputs, system_root='disk0s1s1')
+        disabled = boot_args(*inputs, system_root='disk0s1s1', research_disabled_aks=True)
+        self.assertNotIn(b'aks-endpoint', normal)
+        self.assertIn(b' aks-endpoint=0', disabled)
+        self.assertEqual(normal[:108], disabled[:108])
+        self.assertEqual(normal[716:], disabled[716:])
+        with self.assertRaisesRegex(ValueError, 'disabled AKS'):
+            boot_args(*inputs, research_disabled_aks=True)
+        with self.assertRaisesRegex(ValueError, 'disabled AKS'):
+            make_probe(Path('nonexistent'), research_disabled_aks=True)
+
     def test_debug_profile_is_explicit_and_keeps_default_boot_arguments(self):
         default = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1')
         diagnostic = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1', research_debug_diagnostics=True)

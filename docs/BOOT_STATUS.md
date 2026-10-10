@@ -1,3 +1,23 @@
+## Explicit disabled-AKS manager experiment
+
+Original AppleSEPKeyStore code at 0xfffffff00664b8b8 reads aks-endpoint as an
+8-byte boot argument and sets object +0x1bc when it is explicitly zero.
+The availability function 0xfffffff006653ad4 first waits for AppleSEPManager,
+then returns false when +0x1bc is set; getSEPEndpoint returns without waiting
+for a crypto endpoint. Supplying aks-endpoint=0 alone with an omitted manager
+cannot resolve the confirmed owner wait, because that wait precedes the flag.
+
+A separate opt-in disabled-aks mode keeps the passive original-compatible
+manager under /arm-io/sep-research-manager and supplies the original zero
+endpoint argument. The original /arm-io/sep path remains absent so the boot
+tool can take its existing no-SEP branch. This is an explicit virtual platform
+experiment, not the hardware identity or security behavior of a real iPod.
+Default flags/tree are unchanged; reports identify the alias and keep SEP
+firmware execution, data protection and visible desktop unconfirmed. No
+successful crypto response, dummy Gigalocker or boot-task patch is added.
+144 host tests pass; real driver matching and both desktop processes require
+runtime validation before this experiment can be considered useful.
+
 ## Retained SEP node reproduces original Gigalocker boot failure
 
 Run 38090798038 (27f0f0f) confirms AppleSEPManager registration and

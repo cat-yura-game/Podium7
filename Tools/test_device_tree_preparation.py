@@ -29,6 +29,17 @@ class DeviceTreePreparationTests(unittest.TestCase):
         transport, transport_changes = prepare(tree, 24000000, random_seed=bytes(64),
             research_fastsim=True, research_no_sep=True, research_keybag_diagnostics=True,
             research_sep_manager_probe=True)
+        disabled, disabled_changes = prepare(tree, 24000000, random_seed=bytes(64),
+            research_fastsim=True, research_no_sep=True, research_keybag_diagnostics=True,
+            research_sep_manager_probe=True, research_disabled_aks=True)
+        paths = [n['path'] for n in device_tree(disabled)]
+        self.assertNotIn('/device-tree/arm-io/sep', paths)
+        self.assertIn('/device-tree/arm-io/sep-research-manager', paths)
+        self.assertIn(b'iop,t8010\0iop,s8000\0', disabled)
+        self.assertEqual(next(c for c in disabled_changes if c.get('property') == 'node')['action'],
+                         'alias-for-disabled-aks')
+        with self.assertRaisesRegex(ValueError, 'disabled AKS'):
+            prepare(tree, 24000000, research_disabled_aks=True)
         self.assertIn(b'iop,t8010\0iop,s8000\0', transport)
         self.assertEqual(next(c for c in transport_changes if c.get('property') == 'node')['action'],
                          'retain-for-transport-probe')
