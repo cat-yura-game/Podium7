@@ -1,3 +1,30 @@
+## Actual lock owner waits for absent AppleSEPManager
+
+Run 38090369482 (217a36c), after 300 seconds, records 59 actual processes,
+with neither SpringBoard nor backboardd. Both keybagd PID 47 / TID 698 and
+containermanager PID 67 / TID 718 wait for the same workloop owner TID 138.
+The owner's original stack returns through 0xfffffff006653c38: the preceding
+call passes timeout -1 to waitForService for AppleSEPManager. This precisely
+confirms the missing-service dependency of the no-SEP-node diagnostic profile.
+It is not a guest credential, JIT or launch-label failure.
+
+The first owner diagnostic (38089499560) read the wrong frame's saved x19;
+217a36c uses the preceding contended-lock frame, verified against original
+prologue 0xfffffff0072e3570/74 and a realistic nested-frame unit fixture.
+The corrected real snapshot reports the same owner stack for both waiters.
+No mutex was released, and no SEP or keybag response was fabricated.
+
+Control run 38090021863 retains the original SEP node without the no-SEP/keybag
+profile. It reaches data-protection but exits 2 on the absent original
+/private/xarts/*.gl Gigalocker, then panics on that boot task. This is not a
+working original-SEP boot. The new opt-in transport probe retains the original
+T8010 SEP node while preserving the explicit research keybag diagnostic handoff,
+to observe the real driver dependency independently of this earlier boot task.
+Defaults are unchanged. SEP firmware execution and protection remain absent;
+a retained device node is not an implemented SEP. Run 38090798038 exercises
+that transport probe; its outcome must be inspected before claiming progress.
+139 host tests pass, including rejection of incomplete transport profiles.
+
 ## Confirmed Sandbox / AppleSEPKeyStore wait chain
 
 Run 38088477867 (182905f) records the same 16 kernel return addresses in all

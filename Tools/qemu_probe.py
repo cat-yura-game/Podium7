@@ -384,6 +384,8 @@ def run_probe(directory, executable="qemu-system-aarch64", cpu="max", *, researc
     timer_fiq_transactions = [line for line in trace_text.splitlines() if "PODIUM7 TIMER-FIQ " in line]
     aic_transactions = [line for line in trace_text.splitlines() if "PODIUM7 AIC1 " in line]
     mcc_transactions = [line for line in trace_text.splitlines() if "PODIUM7 MCC " in line]
+    sep_transactions = [line for line in trace_text.splitlines()
+                        if 'PODIUM7 SEP-MAILBOX base=000000020da00000 ' in line]
     wdt_transactions = [line for line in trace_text.splitlines() if "PODIUM7 WDT1 " in line]
     gpio_transactions = [line for line in trace_text.splitlines() if "PODIUM7 GPIO " in line]
     aes_transactions = [line for line in trace_text.splitlines() if "PODIUM7 AES " in line]
@@ -415,6 +417,11 @@ def run_probe(directory, executable="qemu-system-aarch64", cpu="max", *, researc
                "interrupt_controller_diagnostics": [line for line in trace_text.splitlines() if "PODIUM7 IRQ-CONTROLLER " in line][:64],
                "outside_harness_ram_kernel_mappings": outside_harness_ram_mappings,
                "mcc_transactions": mcc_transactions[:128],
+               "sep_transport_probe": {"requested": research_sep_manager_probe,
+                   "original_node_retained": research_sep_manager_probe,
+                   "sep_firmware_execution_confirmed": False,
+                   "sep_data_protection_confirmed": False,
+                   "mailbox_transactions": sep_transactions[:128]},
                "acc_argument_diagnostics": acc_arguments[:128],
                "timer_fiq_transactions": timer_fiq_transactions[:128],
                "aic_transactions": aic_transactions[:128],

@@ -58,6 +58,14 @@ class QEMUProbeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'keybag diagnostic'):
             make_probe(Path('nonexistent'), research_keybag_diagnostics=True)
 
+    def test_sep_transport_probe_rejects_incomplete_profiles_before_reading_files(self):
+        from pathlib import Path
+        from qemu_probe import make_probe
+        for profile in ({}, {'research_no_sep': True},
+                        {'research_no_sep': True, 'research_keybag_diagnostics': True}):
+            with self.assertRaisesRegex(ValueError, 'SEP manager probe'):
+                make_probe(Path('nonexistent'), research_sep_manager_probe=True, **profile)
+
     def test_debug_profile_is_explicit_and_keeps_default_boot_arguments(self):
         default = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1')
         diagnostic = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1', research_debug_diagnostics=True)
