@@ -2,6 +2,10 @@ name: Probe original iOS from prepared APFS system disk
 on:
   workflow_dispatch:
     inputs:
+      sep_manager_probe:
+        description: Retain original SEP node for transport inspection; requires no-SEP/keybag diagnostics
+        type: boolean
+        default: false
       execution_seconds:
         description: Bounded real guest observation period
         type: choice
@@ -109,6 +113,7 @@ jobs:
           KEYBAG_DIAGNOSTICS: ${{ inputs.keybag_diagnostics }}
           DEBUG_DIAGNOSTICS: ${{ inputs.debug_diagnostics }}
           NO_SEP_DIAGNOSTIC: ${{ inputs.no_sep_diagnostic }}
+          SEP_MANAGER_PROBE: ${{ inputs.sep_manager_probe }}
           FASTSIM_DIAGNOSTIC: ${{ inputs.fastsim_diagnostic }}
           UNSEALED_DIAGNOSTIC: ${{ inputs.unsealed_diagnostic }}
         run: |
@@ -120,6 +125,7 @@ jobs:
           if [[ "$UNSEALED_DIAGNOSTIC" == "true" ]]; then extra+=(--research-unsealed-root); fi
           if [[ "$FASTSIM_DIAGNOSTIC" == "true" ]]; then extra+=(--research-fastsim); fi
           if [[ "$NO_SEP_DIAGNOSTIC" == "true" ]]; then extra+=(--research-no-sep); fi
+          if [[ "$SEP_MANAGER_PROBE" == "true" ]]; then extra+=(--research-sep-manager-probe); fi
           if [[ "$KEYBAG_DIAGNOSTICS" == "true" ]]; then extra+=(--research-keybag-diagnostics); fi
           if [[ "$DEBUG_DIAGNOSTICS" == "true" ]]; then extra+=(--research-debug-diagnostics); fi
           python3 Tools/qemu_probe.py "${extra[@]}" --qemu .qemu/build/qemu-system-aarch64 --cpu podium7-research --directory .firmware/system-boot --research-bridge-handoff --trust-cache .firmware/StaticTrustCache.im4p --system-volume .firmware/SystemVolume.im4p --research-system-root "$RESEARCH_ROOT" --research-pmp-core --research-cfi-nvram --research-aes-root-fallback --research-nvme --research-nvme-dart --research-nvme-msi --research-nvme-image .firmware/system-disk/storage-16g.raw --seconds "$EXECUTION_SECONDS" --trace-limit-mib 256

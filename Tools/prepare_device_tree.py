@@ -8,13 +8,15 @@ import secrets
 from analyze_firmware import device_tree
 
 
-def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, dram_size=2 * 1024 * 1024 * 1024, research_bridge_handoff=False, research_internal_storage=False, research_fastsim=False, research_no_sep=False, research_keybag_diagnostics=False):
+def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, dram_size=2 * 1024 * 1024 * 1024, research_bridge_handoff=False, research_internal_storage=False, research_fastsim=False, research_no_sep=False, research_keybag_diagnostics=False, research_sep_manager_probe=False):
     if not 1_000_000 <= counter_frequency <= 1_000_000_000:
         raise ValueError("invalid counter frequency")
     if research_no_sep and not research_fastsim:
         raise ValueError('no-SEP diagnostic requires explicit FastSim identity')
     if research_keybag_diagnostics and not research_no_sep:
         raise ValueError('keybag diagnostic requires explicit no-SEP experiment')
+    if research_sep_manager_probe and not (research_no_sep and research_keybag_diagnostics):
+        raise ValueError('SEP manager probe requires explicit no-SEP/keybag diagnostics')
     original_nodes = device_tree(data)  # Validate bounds/depth before rewriting.
     seed = secrets.token_bytes(64) if random_seed is None else random_seed
     if len(seed) != 64:
@@ -259,12 +261,14 @@ def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, 
         if research_no_sep and path == '/device-tree/arm-io/sep':
             if names.get(b'compatible') != b'iop,t8010\0iop,s8000\0':
                 raise ValueError('no-SEP diagnostic requires original T8010 SEP node')
-            changes.append({'path': path, 'property': 'node', 'action': 'omit',
+            changes.append({'path': path, 'property': 'node',
+                            'action': 'retain-for-transport-probe' if research_sep_manager_probe else 'omit',
                             'source': 'explicit research platform without implemented SEP',
                             'sep_data_protection_confirmed': False})
-            for _ in range(children):
-                _, cursor = node(cursor, path)
-            return b'', cursor
+            if not research_sep_manager_probe:
+                for _ in range(children):
+                    _, cursor = node(cursor, path)
+                return b'', cursor
         encoded = [struct.pack("<II", len(properties), children)]
         for name, value in properties:
             encoded += [name, struct.pack("<I", len(value)), value, bytes((-len(value)) & 3)]
@@ -286,6 +290,6 @@ def prepare(data, counter_frequency, *, random_seed=None, dram_base=0x40000000, 
         raise ValueError('original internal storage endpoint missing')
     if research_fastsim and not any(c.get('value') == 'FastSim' for c in changes):
         raise ValueError('original product node missing for FastSim diagnostic')
-    if research_no_sep and not any(c.get('action') == 'omit' for c in changes):
+    if research_no_sep and not any(c.get('action') == ('retain-for-transport-probe' if research_sep_manager_probe else 'omit') for c in changes):
         raise ValueError('original SEP node missing for no-SEP diagnostic')
     return prepared, changes

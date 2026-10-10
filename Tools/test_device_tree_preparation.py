@@ -26,6 +26,14 @@ class DeviceTreePreparationTests(unittest.TestCase):
         self.assertNotIn(b'osenvironment', normal)
         diagnostic, changes = prepare(tree, 24000000, random_seed=bytes(64),
             research_fastsim=True, research_no_sep=True, research_keybag_diagnostics=True)
+        transport, transport_changes = prepare(tree, 24000000, random_seed=bytes(64),
+            research_fastsim=True, research_no_sep=True, research_keybag_diagnostics=True,
+            research_sep_manager_probe=True)
+        self.assertIn(b'iop,t8010\0iop,s8000\0', transport)
+        self.assertEqual(next(c for c in transport_changes if c.get('property') == 'node')['action'],
+                         'retain-for-transport-probe')
+        with self.assertRaisesRegex(ValueError, 'SEP manager probe'):
+            prepare(tree, 24000000, research_sep_manager_probe=True)
         self.assertIn(b'boot-ios-diagnostics'.ljust(32, b'\0') + struct.pack('<II', 4, 1), diagnostic)
         self.assertIn(b'ephemeral-storage'.ljust(32, b'\0') + struct.pack('<I', 4) + bytes(4), diagnostic)
         self.assertEqual(next(c for c in changes if c.get('property') == 'boot-ios-diagnostics')['path'], '/device-tree/product')
