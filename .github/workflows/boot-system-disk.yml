@@ -10,6 +10,7 @@ on:
           - 'false'
           - 'true'
           - 'disabled-aks'
+          - 'disabled-aks-root-unsupported'
       execution_seconds:
         description: Bounded real guest observation period
         type: choice
@@ -131,6 +132,7 @@ jobs:
           if [[ "$NO_SEP_DIAGNOSTIC" == "true" ]]; then extra+=(--research-no-sep); fi
           if [[ "$SEP_MANAGER_PROBE" == "true" ]]; then extra+=(--research-sep-manager-probe); fi
           if [[ "$SEP_MANAGER_PROBE" == "disabled-aks" ]]; then extra+=(--research-sep-manager-probe --research-disabled-aks); fi
+          if [[ "$SEP_MANAGER_PROBE" == "disabled-aks-root-unsupported" ]]; then extra+=(--research-sep-manager-probe --research-disabled-aks --research-platform-root-unsupported); fi
           if [[ "$KEYBAG_DIAGNOSTICS" == "true" ]]; then extra+=(--research-keybag-diagnostics); fi
           if [[ "$DEBUG_DIAGNOSTICS" == "true" ]]; then extra+=(--research-debug-diagnostics); fi
           python3 Tools/qemu_probe.py "${extra[@]}" --qemu .qemu/build/qemu-system-aarch64 --cpu podium7-research --directory .firmware/system-boot --research-bridge-handoff --trust-cache .firmware/StaticTrustCache.im4p --system-volume .firmware/SystemVolume.im4p --research-system-root "$RESEARCH_ROOT" --research-pmp-core --research-cfi-nvram --research-aes-root-fallback --research-nvme --research-nvme-dart --research-nvme-msi --research-nvme-image .firmware/system-disk/storage-16g.raw --seconds "$EXECUTION_SECONDS" --trace-limit-mib 256

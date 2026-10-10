@@ -1,3 +1,32 @@
+## Disabled-AKS removes the first lock; platform SecureRoot now blocks
+
+Run 38091845866 (74e05ae) validates the explicit disabled-AKS manager alias:
+original AppleSEPManager registers; init_data_protection prints No SEP present;
+all 22 early tasks complete without panic, with 100,707 EL0 returns in 300s.
+keybagd no longer waits on the owner's SEP manager lock: it has ordinary Mach
+receive/workqueue continuations. 59 processes remain; neither SpringBoard nor
+backboardd appears. This is real removal of one wait, not a completed boot.
+
+containermanager PID 67 now returns through 0xfffffff00664be98 and
+0xfffffff005b92a28. The latter address is in the original AppleARMPlatform
+__TEXT_EXEC (0xfffffff005b88000 +0x33f70), not an AKS initialization function.
+Original strings and dispatch code identify SecureRoot; the platform waits for
+its +0x10a completion byte. The earlier IOSecureBSDRoot RET diagnostic omitted
+the SecureRootName callback, leaving this request permanently incomplete.
+
+A separate disabled-aks-root-unsupported probe adds a full-original-hash and
+20-byte signature guarded SecureRoot query failure path. It zeros the original
+one-byte output when non-null, returns kIOReturnUnsupported (0xe00002c7), and
+uses the original shared epilogue. It does not set authentication or readiness
+flags, release a lock manually, or return success. Default/earlier experiments
+are unchanged and reproducible. 147 host tests pass; the patch was also applied
+locally to the exact original image, preserving its length and recording all
+edits and hashes. Real consumer behavior still requires a new full guest test.
+
+The separate read-only provisioning analysis 38092124020 now succeeds after
+fixing bounded APFS readiness and userland LC_MAIN parsing; no original binary,
+shared cache or key values were exported.
+
 ## Explicit disabled-AKS manager experiment
 
 Original AppleSEPKeyStore code at 0xfffffff00664b8b8 reads aks-endpoint as an

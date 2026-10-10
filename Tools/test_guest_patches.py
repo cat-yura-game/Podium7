@@ -26,6 +26,41 @@ class GuestPatchTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'signature mismatch'):
                 gp.skip_restore_secure_root(wrong, segments, unsealed_system_root=True)
 
+    def test_platform_root_failure_preserves_false_output_and_shared_epilogue(self):
+        from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
+        original, segments = self.fixture()
+        auth_offset = len(original)
+        original += gp.SYSTEM_ROOT_AUTH_SIGNATURE
+        query_offset = len(original)
+        original += gp.PLATFORM_ROOT_QUERY_SIGNATURE + b'TAIL'
+        segments += [{'address': hex(gp.SYSTEM_ROOT_AUTH_BRANCH-8), 'file_size': 16, 'offset': auth_offset},
+                     {'address': hex(gp.PLATFORM_ROOT_QUERY), 'file_size': 20, 'offset': query_offset}]
+        with patch.object(gp, 'REFERENCE_SHA256', hashlib.sha256(original).hexdigest()):
+            control, _ = gp.skip_restore_secure_root(original, segments, unsealed_system_root=True)
+            changed, report = gp.skip_restore_secure_root(original, segments,
+                unsealed_system_root=True, platform_root_unsupported=True)
+            with self.assertRaisesRegex(ValueError, 'unsealed'):
+                gp.skip_restore_secure_root(original, segments, platform_root_unsupported=True)
+            with self.assertRaisesRegex(ValueError, 'not file-backed'):
+                gp.skip_restore_secure_root(original, segments[:-1],
+                    unsealed_system_root=True, platform_root_unsupported=True)
+        self.assertEqual(changed[:query_offset], control[:query_offset])
+        self.assertEqual(changed[query_offset+20:], original[query_offset+20:])
+        edit = report['additional_edits'][-1]
+        self.assertEqual(edit['return_status'], 'kIOReturnUnsupported')
+        self.assertFalse(edit['trusted_output'])
+        decoder = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
+        instructions = list(decoder.disasm(gp.PLATFORM_ROOT_UNSUPPORTED, gp.PLATFORM_ROOT_QUERY))
+        self.assertEqual([(i.mnemonic, i.op_str) for i in instructions], [
+            ('cbz', 'x20, #0xfffffff005b92a10'), ('strb', 'wzr, [x20]'),
+            ('mov', 'w0, #0x2c7'), ('movk', 'w0, #0xe000, lsl #16'),
+            ('b', '#0xfffffff005b92d04')])
+        wrong = original[:query_offset] + bytes(20) + original[query_offset+20:]
+        with patch.object(gp, 'REFERENCE_SHA256', hashlib.sha256(wrong).hexdigest()):
+            with self.assertRaisesRegex(ValueError, 'signature mismatch'):
+                gp.skip_restore_secure_root(wrong, segments,
+                    unsealed_system_root=True, platform_root_unsupported=True)
+
     def fixture(self):
         original = b"PREFIX!!" + gp.ENTRY_SIGNATURE + b"SUFFIX!!"
         segment = {"address": hex(gp.SECURE_ROOT_ENTRY), "file_size": len(gp.ENTRY_SIGNATURE), "offset": 8}

@@ -3,6 +3,7 @@ Never modify firmware files. Guard a single in-memory kernel edit by the
 complete original 19H422 kernel hash and exact IOSecureBSDRoot entry bytes.
 """
 import hashlib
+import struct
 
 REFERENCE_SHA256 = "115489dd3e2adbe3e0d646413adb9397cfaf1c47f7b5d03620f78dd7d9371814"
 SECURE_ROOT_ENTRY = 0xfffffff0077b9084
@@ -15,9 +16,17 @@ AES_CALL_SIGNATURE = bytes.fromhex("060080d200013fd6")
 AES_UNSUPPORTED = bytes.fromhex("e05880520000bc72")
 SYSTEM_ROOT_AUTH_BRANCH = 0xfffffff00759fea8
 SYSTEM_ROOT_AUTH_SIGNATURE = bytes.fromhex("e0c3029100013fd6801100353c410394")
+PLATFORM_ROOT_QUERY = 0xfffffff005b92a08
+PLATFORM_ROOT_QUERY_SIGNATURE = bytes.fromhex('682a443928010035762a0491e00316aa01008052')
+# cbz x20,+8; strb wzr,[x20]; mov/movk w0,kIOReturnUnsupported;
+# b existing shared epilogue. Never report trusted root or a success status.
+PLATFORM_ROOT_UNSUPPORTED = (bytes.fromhex('540000b49f020039') + AES_UNSUPPORTED +
+    struct.pack('<I', 0x14000000 | ((0xfffffff005b92d04 - (PLATFORM_ROOT_QUERY + 16)) // 4)))
 
 
-def skip_restore_secure_root(kernel, segments, *, aes_root_fallback=False, unsealed_system_root=False):
+def skip_restore_secure_root(kernel, segments, *, aes_root_fallback=False, unsealed_system_root=False, platform_root_unsupported=False):
+    if platform_root_unsupported and not unsealed_system_root:
+        raise ValueError('unsupported platform root query requires explicit unsealed system diagnostic')
     original_digest = hashlib.sha256(kernel).hexdigest()
     if original_digest != REFERENCE_SHA256:
         raise ValueError("restore root experiment requires the exact original 19H422 kernel")
@@ -44,6 +53,22 @@ def skip_restore_secure_root(kernel, segments, *, aes_root_fallback=False, unsea
                     'original_bytes': kernel[auth_offset:auth_offset+4].hex(), 'replacement_bytes': '1f2003d5',
                     'guest_root_authenticated': False,
                     'reason': 'isolate genuine system launchd startup from missing installed root snapshot; not authenticated boot'})
+            if platform_root_unsupported:
+                query_segment = next((s for s in segments if int(s['address'], 16) <= PLATFORM_ROOT_QUERY and
+                    PLATFORM_ROOT_QUERY + len(PLATFORM_ROOT_QUERY_SIGNATURE) <= int(s['address'], 16) + s['file_size']), None)
+                if query_segment is None:
+                    raise ValueError('platform root query is not file-backed')
+                query_offset = query_segment['offset'] + PLATFORM_ROOT_QUERY - int(query_segment['address'], 16)
+                if kernel[query_offset:query_offset+len(PLATFORM_ROOT_QUERY_SIGNATURE)] != PLATFORM_ROOT_QUERY_SIGNATURE:
+                    raise ValueError('platform root query signature mismatch')
+                changed[query_offset:query_offset+len(PLATFORM_ROOT_UNSUPPORTED)] = PLATFORM_ROOT_UNSUPPORTED
+                additional_edits.append({'name': 'research platform SecureRoot unsupported query',
+                    'virtual_address': hex(PLATFORM_ROOT_QUERY), 'file_offset': query_offset,
+                    'original_bytes': PLATFORM_ROOT_QUERY_SIGNATURE.hex(),
+                    'replacement_bytes': PLATFORM_ROOT_UNSUPPORTED.hex(),
+                    'guest_root_authenticated': False, 'trusted_output': False,
+                    'return_status': 'kIOReturnUnsupported',
+                    'reason': 'unimplemented SecureRoot callback reports explicit failure instead of waiting indefinitely'})
             if aes_root_fallback:
                 aes_segment = next((s for s in segments if int(s["address"], 16) <= AES_SECURE_ROOT_CALL and
                     AES_SECURE_ROOT_CALL + len(AES_CALL_SIGNATURE) <= int(s["address"], 16) + s["file_size"]), None)

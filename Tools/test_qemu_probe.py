@@ -81,6 +81,13 @@ class QEMUProbeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'disabled AKS'):
             make_probe(Path('nonexistent'), research_disabled_aks=True)
 
+    def test_platform_root_unsupported_rejects_non_diagnostic_profiles(self):
+        from pathlib import Path
+        from qemu_probe import make_probe
+        for profile in ({}, {'research_disabled_aks': True}, {'research_unsealed_root': True}):
+            with self.assertRaisesRegex(ValueError, 'unsupported platform root'):
+                make_probe(Path('nonexistent'), research_platform_root_unsupported=True, **profile)
+
     def test_debug_profile_is_explicit_and_keeps_default_boot_arguments(self):
         default = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1')
         diagnostic = boot_args(0xfffffff004000000, 0xfffffff007d00000, 1234, 0x48000000, system_root='disk0s1s1', research_debug_diagnostics=True)
