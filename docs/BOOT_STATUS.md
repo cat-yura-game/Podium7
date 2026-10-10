@@ -1,3 +1,35 @@
+## Confirmed Sandbox / AppleSEPKeyStore wait chain
+
+Run 38088477867 (182905f) records the same 16 kernel return addresses in all
+22 xpcproxy threads and one root launchd worker. The original sandbox kext's
+0xfffffff0069406bc path obtains host special port 25, then calls kernel Mach
+RPC at 0xfffffff0069408e4. The stub resolves to original
+_mach_msg_rpc_from_kernel_proper (0xfffffff0071cc7b0). Port 25 is
+HOST_CONTAINERD_PORT in Apple's host_special_ports.h. The surrounding path
+updates process sandbox/container credentials during exec. This is an actual
+wait chain, not an inference from PID ordering or missing argv pages.
+
+containermanagerd PID 67 and keybagd PID 47 both block at the same original
+AppleSEPKeyStore user-client path 0xfffffff00665734c, through
+IOCommandGate::runAction and IOWorkLoop::closeGate (return 0xfffffff007764520).
+Their state is 9 and they wait in the contended mutex path. The next bounded
+reader identifies the thread holding that workloop lock without releasing it
+or substituting a successful SEP response. The SEP initialization/hardware
+dependency has not been resolved; SpringBoard/backboardd remain absent.
+
+The read-only prelink metadata and each embedded kext's Mach-O segments verify
+the two address ranges: sandbox __TEXT_EXEC 0xfffffff00691c000..006942e28;
+AppleSEPKeyStore __TEXT_EXEC 0xfffffff006646000..006677f0c. Do not attribute
+these stripped functions using the nearest unrelated global kernel symbol.
+
+Run 38088131684 validates the bounded label reader's failure behavior:
+all 22 proxy argument pages are unmapped at this snapshot. No labels were
+recovered or guessed, and verified process/thread identities remain intact.
+137 tests pass in the stack snapshot run. Visible desktop is unconfirmed.
+
+Primary port definition:
+https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/mach/host_special_ports.h
+
 ## Bounded diagnostics for the outstanding launch stall
 
 The stopped, hash-gated process snapshot now records original thread IDs,

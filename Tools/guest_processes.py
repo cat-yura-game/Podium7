@@ -51,13 +51,13 @@ def inspect(read, *, thread_metadata=False, thread_backtraces=False, read_physic
                       "kernel_continuation": hex(continuation)}
             if thread_backtraces and not continuation and state & 1:
                 try:
-                    thread['kernel_return_addresses'] = backtrace(current)
+                    thread['kernel_return_addresses'] = backtrace(current, thread)
                 except (ValueError, KeyError) as error:
                     thread['backtrace_capture_error'] = str(error)
             result.append(thread)
             current = word(current + 0x3a8)
         return result
-    def backtrace(thread):
+    def backtrace(thread, owner_info=None):
         # Original _Switch_context 0xfffffff0071946e4 uses thread +0x130
         # and stores FP/LR/SP at context +0x50/+0x58/+0x60. Retain only
         # kernel return addresses, never locals, general registers or stacks.
@@ -73,6 +73,23 @@ def inspect(read, *, thread_metadata=False, thread_backtraces=False, read_physic
             result.append(hex(link))
             if not pointer(frame) or frame < stack or frame + 16 > end:
                 break
+            if owner_info is not None and link == 0xfffffff007764520 and frame >= stack + 8:
+                # Contended mutex prologue 0xfffffff0072e3570 saves the
+                # caller's x19 at FP-8. IOWorkLoop::closeGate's x19 is its
+                # mutex; 0xfffffff0072e3608 masks the low two owner bits.
+                try:
+                    mutex = word(frame - 8)
+                    owner = word(mutex) & ~3
+                    owner_tid = word(owner + 0x458)
+                    owner_continuation = word(owner + 0xd0)
+                    if owner_tid > (1 << 48):
+                        raise ValueError('invalid workloop owner identity')
+                    detail = {'tid': owner_tid, 'kernel_continuation': hex(owner_continuation)}
+                    if not owner_continuation:
+                        detail['kernel_return_addresses'] = backtrace(owner)
+                    owner_info['blocked_workloop_owner'] = detail
+                except (ValueError, KeyError) as error:
+                    owner_info['workloop_owner_capture_error'] = str(error)
             next_frame, link = struct.unpack('<QQ', data(frame, 16))
             if next_frame <= frame:
                 break

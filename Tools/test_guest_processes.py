@@ -92,6 +92,22 @@ class GuestProcessesTests(unittest.TestCase):
         self.assertEqual(result['processes'][0]['threads'][0]['kernel_return_addresses'],
                          ['0xfffffff007194734'])
 
+    def test_workloop_owner_is_read_without_releasing_lock(self):
+        memory, task, thread = self.thread_fixture()
+        context, stack, mutex, owner = task+0x2000, task+0x4000, task+0x9000, task+0xa000
+        memory[thread+0xd0] = struct.pack('<Q', 0)
+        memory[thread+0x130] = struct.pack('<Q', context)
+        memory[context+0x50] = struct.pack('<QQQ', stack+0x80, 0xfffffff007764520, stack)
+        memory[stack+0x78] = struct.pack('<Q', mutex)
+        memory[stack+0x80] = struct.pack('<QQ', 0, 0)
+        memory[mutex] = struct.pack('<Q', owner|3)
+        memory[owner+0x458] = struct.pack('<Q', 777)
+        memory[owner+0xd0] = struct.pack('<Q', 0xfffffff0071a86e8)
+        result = inspect(lambda a,s: memory[a], thread_metadata=True, thread_backtraces=True)
+        detail = result['processes'][0]['threads'][0]['blocked_workloop_owner']
+        self.assertEqual(detail, {'tid':777, 'kernel_continuation':'0xfffffff0071a86e8'})
+        self.assertEqual(struct.unpack('<Q',memory[mutex])[0],owner|3)
+
     def test_credential_requires_kernel_pointer_and_matching_process(self):
         memory, nodes = self.fixture()
         memory[nodes[0] + 0x500] = struct.pack('<Q', nodes[1])
