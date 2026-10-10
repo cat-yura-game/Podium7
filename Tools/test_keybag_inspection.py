@@ -45,6 +45,25 @@ class KeybagInspectionTests(unittest.TestCase):
         self.assertEqual(result['markers'][0]['address'], '0x180000100')
         self.assertEqual(result['markers'][0]['references'][0]['address'], '0x180000080')
 
+    def test_userland_provisioning_windows_do_not_require_kernel_entry(self):
+        import hashlib
+        from inspect_keybag_host import data_protection_windows
+        data = bytearray(0xc000)
+        struct.pack_into('<8I', data, 0, 0xfeedfacf, 0x100000c, 0, 2, 1, 72, 0, 0)
+        struct.pack_into('<II', data, 32, 0x19, 72)
+        struct.pack_into('<QQQQII', data, 56, 0x100000000, len(data), 0, len(data), 5, 5)
+        for address in (0x472c, 0x482c, 0x492c, 0x97c4, 0xa9cc):
+            data[address:address+256] = struct.pack('<I', 0xd503201f) * 64
+        with patch('inspect_keybag_host.DATA_PROTECTION_SHA256', hashlib.sha256(data).hexdigest()):
+            result = data_protection_windows(data)
+        self.assertEqual(len(result['windows']), 5)
+        self.assertEqual(len(result['windows'][0]['instructions']), 64)
+        self.assertEqual(result['windows'][0]['instructions'][0]['mnemonic'], 'nop')
+        self.assertFalse(result['binary_exported'])
+        struct.pack_into('<Q', data, 32+48, len(data)+1)
+        with patch('inspect_keybag_host.DATA_PROTECTION_SHA256', hashlib.sha256(data).hexdigest()):
+            with self.assertRaisesRegex(ValueError, 'exceeds bounds'):data_protection_windows(data)
+
     def test_provisioning_windows_reject_unverified_images(self):
         from inspect_keybag_host import data_protection_windows
         with self.assertRaisesRegex(ValueError, 'unsupported original'):

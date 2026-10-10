@@ -176,9 +176,33 @@ def data_protection_windows(data):
     """Only short original argument/provisioning code windows, exact image gate."""
     if hashlib.sha256(data).hexdigest() != DATA_PROTECTION_SHA256:
         raise ValueError('unsupported original data-protection image')
-    from analyze_firmware import macho
     from capstone import Cs, CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN
-    segments = macho(data)['segments']
+    # Userland executables use LC_MAIN, not the kernel's LC_UNIXTHREAD.
+    # Validate their segment table without requiring a kernel entry command.
+    if len(data) < 32:
+        raise ValueError('truncated original userland image')
+    header = struct.unpack_from('<8I', data)
+    commands, command_bytes = header[4:6]
+    if header[:2] != (0xfeedfacf, 0x100000c) or commands > 10000 or command_bytes > len(data)-32:
+        raise ValueError('invalid original userland command table')
+    cursor, segments = 32, []
+    for _ in range(commands):
+        if cursor + 8 > 32 + command_bytes:
+            raise ValueError('truncated original userland command')
+        kind, size = struct.unpack_from('<II', data, cursor)
+        if size < 8 or cursor + size > 32 + command_bytes:
+            raise ValueError('invalid original userland command size')
+        if kind == 0x19:
+            if size < 72:
+                raise ValueError('short original userland segment')
+            address, length, offset, file_size, maximum, initial = struct.unpack_from('<QQQQII', data, cursor+24)
+            if file_size > length or offset + file_size > len(data) or address + length > 1 << 64 or initial & ~maximum:
+                raise ValueError('original userland segment exceeds bounds')
+            if initial & 4:
+                segments.append({'address': hex(address), 'offset': offset, 'file_size': file_size})
+        cursor += size
+    if cursor != 32 + command_bytes:
+        raise ValueError('incomplete original userland command table')
     decoder = Cs(CS_ARCH_ARM64, CS_MODE_LITTLE_ENDIAN)
     windows = []
     # Original report identifies usage at 0x10000472c and Gigalocker
