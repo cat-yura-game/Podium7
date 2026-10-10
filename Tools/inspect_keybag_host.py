@@ -7,6 +7,7 @@ import pathlib
 import plistlib
 import struct
 import subprocess
+import time
 from prepare_install_layout import SYSTEM_UUID, command, fixture_container, mount_volume
 
 DATA_PROTECTION_SHA256 = 'efde4ed4455c653e8bc2b653edd1e120d6a2b967b3a07212a504e0d33548e215'
@@ -199,6 +200,18 @@ def data_protection_windows(data):
     return {'read_only': True, 'binary_exported': False, 'windows': windows}
 
 
+def ready_fixture_container(whole):
+    # diskutil may not publish a newly attached APFS image immediately.
+    # Retry only that bounded discovery error; retain all identity checks.
+    for attempt in range(10):
+        try:
+            return fixture_container(whole)
+        except ValueError as error:
+            if str(error) != 'isolated fixture container not uniquely identified' or attempt == 9:
+                raise
+            time.sleep(1)
+
+
 def inspect(image):
     root = pathlib.Path.cwd().resolve() / '.firmware'
     image = pathlib.Path(image).resolve()
@@ -211,7 +224,7 @@ def inspect(image):
     whole = min(devices, key=len)
     report = {'read_only': True, 'binary_exported': False, 'files': []}
     try:
-        container = fixture_container(whole)
+        container = ready_fixture_container(whole)
         systems = [volume for volume in container.get('Volumes', [])
                    if volume.get('APFSVolumeUUID') == SYSTEM_UUID and volume.get('Roles') == ['System']]
         if len(systems) != 1 or len(container.get('Volumes', [])) != 1:

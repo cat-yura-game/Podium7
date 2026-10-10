@@ -28,6 +28,25 @@ def evidence(serial, trace):
             "springboard_confirmed": False, "booted_ios": False}
 
 
+def desktop_process_evidence(metadata):
+    """Process presence is a separate milestone from a visible, working UI."""
+    valid = (metadata.get('read_only') is True and
+             metadata.get('source') == 'stopped original kernel process hash' and
+             not metadata.get('capture_error'))
+    processes = metadata.get('processes', []) if valid else []
+    identities = [{key: item[key] for key in ('pid', 'name', 'uid')}
+                  for item in processes if isinstance(item, dict) and
+                  item.get('name') in ('SpringBoard', 'backboardd') and
+                  isinstance(item.get('pid'), int) and 0 < item['pid'] <= 1000000 and
+                  isinstance(item.get('uid'), int)]
+    names = {item['name'] for item in identities}
+    return {'springboard_process_seen': 'SpringBoard' in names,
+            'backboardd_process_seen': 'backboardd' in names,
+            'desktop_service_processes_seen': names == {'SpringBoard', 'backboardd'},
+            'desktop_process_identities': identities,
+            'visible_springboard_confirmed': False}
+
+
 def verify(directory):
     directory = pathlib.Path(directory)
     result = evidence((directory/'qemu-serial.txt').read_text(errors='replace'),
@@ -37,6 +56,7 @@ def verify(directory):
         for patch in patches for edit in patch.get('additional_edits', []))
     probe = json.loads((directory/'qemu-probe.json').read_text()) if (directory/'qemu-probe.json').exists() else {}
     result['guest_process_metadata'] = (probe.get('cpu_snapshot') or {}).get('guest_process_metadata', {})
+    result.update(desktop_process_evidence(result['guest_process_metadata']))
     result['probe_stop_reason'] = probe.get('stop')
     result['probe_trace_budget_exhausted'] = 'trace limit reached' in (probe.get('stop') or '')
     tree_report = json.loads((directory/'device-tree-preparation.json').read_text()) if (directory/'device-tree-preparation.json').exists() else {}

@@ -42,4 +42,31 @@ class SystemUserlandTests(unittest.TestCase):
         self.assertEqual(result['fstab_missing_roles'], [])
 
 
+
+
+class DesktopProcessEvidenceTests(unittest.TestCase):
+    def test_both_original_processes_required_and_no_pixels_inferred(self):
+        from verify_system_userland import desktop_process_evidence
+        metadata = {'read_only': True, 'source': 'stopped original kernel process hash',
+                    'processes': [{'pid': 81, 'uid': 501, 'name': 'SpringBoard'}]}
+        self.assertFalse(desktop_process_evidence(metadata)['desktop_service_processes_seen'])
+        metadata['processes'].append({'pid': 82, 'uid': 501, 'name': 'backboardd'})
+        result = desktop_process_evidence(metadata)
+        self.assertTrue(result['desktop_service_processes_seen'])
+        self.assertFalse(result['visible_springboard_confirmed'])
+        self.assertEqual([p['pid'] for p in result['desktop_process_identities']], [81, 82])
+        metadata['capture_error'] = 'unreadable metadata'
+        self.assertFalse(desktop_process_evidence(metadata)['desktop_service_processes_seen'])
+
+    def test_hint_flags_and_proxy_names_are_not_process_evidence(self):
+        from verify_system_userland import desktop_process_evidence
+        result = desktop_process_evidence({'read_only': True,
+            'source': 'stopped original kernel process hash',
+            'springboard_process_seen': True, 'backboardd_process_seen': True,
+            'processes': [{'pid': 81, 'uid': 501, 'name': 'xpcproxy',
+                           'launch_service_label': 'com.apple.SpringBoard'}]})
+        self.assertFalse(result['springboard_process_seen'])
+        self.assertFalse(result['backboardd_process_seen'])
+
+
 if __name__ == '__main__':unittest.main()

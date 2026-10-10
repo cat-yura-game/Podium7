@@ -50,6 +50,21 @@ class KeybagInspectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unsupported original'):
             data_protection_windows(bytes(4096))
 
+    def test_fixture_readiness_retries_only_discovery_with_a_fixed_limit(self):
+        from inspect_keybag_host import ready_fixture_container
+        error = ValueError('isolated fixture container not uniquely identified')
+        with patch('inspect_keybag_host.fixture_container', side_effect=[error, {'ready': True}]) as read, patch('inspect_keybag_host.time.sleep') as sleep:
+            self.assertEqual(ready_fixture_container('/dev/disk12'), {'ready': True})
+            self.assertEqual(read.call_count, 2)
+            sleep.assert_called_once_with(1)
+        with patch('inspect_keybag_host.fixture_container', side_effect=error) as read, patch('inspect_keybag_host.time.sleep'):
+            with self.assertRaises(ValueError):ready_fixture_container('/dev/disk12')
+            self.assertEqual(read.call_count, 10)
+        with patch('inspect_keybag_host.fixture_container', side_effect=ValueError('wrong identity')) as read, patch('inspect_keybag_host.time.sleep') as sleep:
+            with self.assertRaisesRegex(ValueError, 'wrong identity'):ready_fixture_container('/dev/disk12')
+            self.assertEqual(read.call_count, 1)
+            sleep.assert_not_called()
+
     def test_unrelated_image_never_attached(self):
         with patch('inspect_keybag_host.command') as command:
             with self.assertRaisesRegex(ValueError, 'isolated'): inspect('other.raw')

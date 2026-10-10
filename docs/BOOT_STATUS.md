@@ -1,3 +1,22 @@
+## Retained SEP node reproduces original Gigalocker boot failure
+
+Run 38090798038 (27f0f0f) confirms AppleSEPManager registration and
+AppleCredentialManager matching with the transport-probe node retained.
+Despite boot-ios-diagnostics=1 being present in the prepared DeviceTree,
+init_data_protection takes its original SEP branch: the Gigalocker file is
+absent, exit(2) causes a userspace boot-task panic. Keybag diagnostic skip was
+not reached. 12,120 EL0 returns are observed; only fsck, mount-phase-1 and
+data-protection execute. Neither desktop process exists. This experiment
+therefore does not resolve the original launch stall and is not promoted to
+the default profile.
+
+The next read-only inspection (38091381112) decodes five bounded windows in
+the exact original init_data_protection image to determine its real argument
+and Gigalocker creation path. No empty/fabricated Gigalocker, launch-task skip,
+security response or cryptographic material is introduced. The boot verifier
+now reports both actual SpringBoard/backboardd process identities as a distinct
+milestone, independently of launch labels or visible-display confirmation.
+
 ## Actual lock owner waits for absent AppleSEPManager
 
 Run 38090369482 (217a36c), after 300 seconds, records 59 actual processes,
