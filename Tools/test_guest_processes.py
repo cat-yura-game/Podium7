@@ -97,9 +97,10 @@ class GuestProcessesTests(unittest.TestCase):
         context, stack, mutex, owner = task+0x2000, task+0x4000, task+0x9000, task+0xa000
         memory[thread+0xd0] = struct.pack('<Q', 0)
         memory[thread+0x130] = struct.pack('<Q', context)
-        memory[context+0x50] = struct.pack('<QQQ', stack+0x80, 0xfffffff007764520, stack)
+        memory[context+0x50] = struct.pack('<QQQ', stack+0x80, 0xfffffff0072e3a8c, stack)
         memory[stack+0x78] = struct.pack('<Q', mutex)
-        memory[stack+0x80] = struct.pack('<QQ', 0, 0)
+        memory[stack+0x80] = struct.pack('<QQ', stack+0x100, 0xfffffff007764520)
+        memory[stack+0x100] = struct.pack('<QQ', 0, 0)
         memory[mutex] = struct.pack('<Q', owner|3)
         memory[owner+0x458] = struct.pack('<Q', 777)
         memory[owner+0xd0] = struct.pack('<Q', 0xfffffff0071a86e8)

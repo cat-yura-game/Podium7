@@ -67,18 +67,21 @@ def inspect(read, *, thread_metadata=False, thread_backtraces=False, read_physic
             raise ValueError('invalid stopped thread stack pointer')
         end = (stack & ~0x3fff) + 0x4000
         result = []
+        previous_frame = None
         for _ in range(16):
             if not (0xffffffe000000000 <= link < 0xffffffffffffffff and link % 4 == 0):
                 break
             result.append(hex(link))
             if not pointer(frame) or frame < stack or frame + 16 > end:
                 break
-            if owner_info is not None and link == 0xfffffff007764520 and frame >= stack + 8:
+            if owner_info is not None and link == 0xfffffff007764520 and previous_frame is not None:
                 # Contended mutex prologue 0xfffffff0072e3570 saves the
                 # caller's x19 at FP-8. IOWorkLoop::closeGate's x19 is its
                 # mutex; 0xfffffff0072e3608 masks the low two owner bits.
                 try:
-                    mutex = word(frame - 8)
+                    # The return PC belongs to closeGate; its callee-save
+                    # slot is in the preceding contended-lock frame.
+                    mutex = word(previous_frame - 8)
                     owner = word(mutex) & ~3
                     owner_tid = word(owner + 0x458)
                     owner_continuation = word(owner + 0xd0)
@@ -93,6 +96,7 @@ def inspect(read, *, thread_metadata=False, thread_backtraces=False, read_physic
             next_frame, link = struct.unpack('<QQ', data(frame, 16))
             if next_frame <= frame:
                 break
+            previous_frame = frame
             stack, frame = frame + 16, next_frame
         return result
     base, mask = word(HASH_POINTER), word(HASH_MASK)
