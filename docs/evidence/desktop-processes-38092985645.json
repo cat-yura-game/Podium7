@@ -1,0 +1,648 @@
+{
+  "run_url": "https://github.com/agent-ios-dev/Podium7/actions/runs/38092985645",
+  "commit": "c29e545",
+  "source": "stopped original kernel process hash",
+  "read_only": true,
+  "execution_seconds": 300,
+  "process_count": 103,
+  "desktop_process_identities": [
+    {
+      "pid": 61,
+      "name": "backboardd",
+      "uid": 501
+    },
+    {
+      "pid": 142,
+      "name": "SpringBoard",
+      "uid": 501
+    }
+  ],
+  "desktop_service_processes_seen": true,
+  "el0_return_count": 475068,
+  "early_boot_complete_seen": true,
+  "kernel_panic_seen": false,
+  "visible_springboard_confirmed": false,
+  "authenticated_boot_confirmed": false,
+  "sep_data_protection_confirmed": false,
+  "profile": "explicit unsealed FastSim, disabled AKS manager alias, SecureRoot unsupported query",
+  "processes": [
+    {
+      "pid": 1,
+      "ppid": 0,
+      "uid": 0,
+      "name": "launchd"
+    },
+    {
+      "pid": 28,
+      "ppid": 1,
+      "uid": 0,
+      "name": "UserEventAgent"
+    },
+    {
+      "pid": 29,
+      "ppid": 1,
+      "uid": 272,
+      "name": "logd"
+    },
+    {
+      "pid": 30,
+      "ppid": 1,
+      "uid": 501,
+      "name": "fairplayd.O2"
+    },
+    {
+      "pid": 31,
+      "ppid": 1,
+      "uid": 501,
+      "name": "assistantd"
+    },
+    {
+      "pid": 32,
+      "ppid": 1,
+      "uid": 0,
+      "name": "runningboardd"
+    },
+    {
+      "pid": 33,
+      "ppid": 1,
+      "uid": 501,
+      "name": "peopled"
+    },
+    {
+      "pid": 34,
+      "ppid": 1,
+      "uid": 0,
+      "name": "fseventsd"
+    },
+    {
+      "pid": 36,
+      "ppid": 1,
+      "uid": 501,
+      "name": "mediaremoted"
+    },
+    {
+      "pid": 37,
+      "ppid": 1,
+      "uid": 501,
+      "name": "routined"
+    },
+    {
+      "pid": 38,
+      "ppid": 1,
+      "uid": 0,
+      "name": "misd"
+    },
+    {
+      "pid": 39,
+      "ppid": 1,
+      "uid": 0,
+      "name": "configd"
+    },
+    {
+      "pid": 40,
+      "ppid": 1,
+      "uid": 501,
+      "name": "healthd"
+    },
+    {
+      "pid": 41,
+      "ppid": 1,
+      "uid": 278,
+      "name": "accessoryupdater"
+    },
+    {
+      "pid": 42,
+      "ppid": 1,
+      "uid": 0,
+      "name": "powerd"
+    },
+    {
+      "pid": 43,
+      "ppid": 1,
+      "uid": 501,
+      "name": "tccd"
+    },
+    {
+      "pid": 44,
+      "ppid": 1,
+      "uid": 501,
+      "name": "atc"
+    },
+    {
+      "pid": 45,
+      "ppid": 1,
+      "uid": 501,
+      "name": "WirelessRadioMan"
+    },
+    {
+      "pid": 46,
+      "ppid": 1,
+      "uid": 501,
+      "name": "biomed"
+    },
+    {
+      "pid": 47,
+      "ppid": 1,
+      "uid": 0,
+      "name": "keybagd"
+    },
+    {
+      "pid": 48,
+      "ppid": 1,
+      "uid": 0,
+      "name": "remoted"
+    },
+    {
+      "pid": 50,
+      "ppid": 1,
+      "uid": 501,
+      "name": "familynotificati"
+    },
+    {
+      "pid": 51,
+      "ppid": 1,
+      "uid": 0,
+      "name": "wifid"
+    },
+    {
+      "pid": 52,
+      "ppid": 1,
+      "uid": 501,
+      "name": "softwareupdated"
+    },
+    {
+      "pid": 53,
+      "ppid": 1,
+      "uid": 501,
+      "name": "mobiletimerd"
+    },
+    {
+      "pid": 54,
+      "ppid": 1,
+      "uid": 501,
+      "name": "identityservices"
+    },
+    {
+      "pid": 55,
+      "ppid": 1,
+      "uid": 0,
+      "name": "watchdogd"
+    },
+    {
+      "pid": 56,
+      "ppid": 1,
+      "uid": 501,
+      "name": "atwakeup"
+    },
+    {
+      "pid": 57,
+      "ppid": 1,
+      "uid": 501,
+      "name": "contextstored"
+    },
+    {
+      "pid": 60,
+      "ppid": 1,
+      "uid": 501,
+      "name": "askpermissiond"
+    },
+    {
+      "pid": 61,
+      "ppid": 1,
+      "uid": 501,
+      "name": "backboardd"
+    },
+    {
+      "pid": 62,
+      "ppid": 1,
+      "uid": 501,
+      "name": "sharingd"
+    },
+    {
+      "pid": 63,
+      "ppid": 1,
+      "uid": 501,
+      "name": "ManagedSettingsA"
+    },
+    {
+      "pid": 64,
+      "ppid": 1,
+      "uid": 266,
+      "name": "timed"
+    },
+    {
+      "pid": 65,
+      "ppid": 1,
+      "uid": 0,
+      "name": "locationd"
+    },
+    {
+      "pid": 66,
+      "ppid": 1,
+      "uid": 501,
+      "name": "cloudpaird"
+    },
+    {
+      "pid": 67,
+      "ppid": 1,
+      "uid": 0,
+      "name": "containermanager"
+    },
+    {
+      "pid": 68,
+      "ppid": 1,
+      "uid": 501,
+      "name": "imagent"
+    },
+    {
+      "pid": 69,
+      "ppid": 1,
+      "uid": 0,
+      "name": "driverkitd"
+    },
+    {
+      "pid": 70,
+      "ppid": 1,
+      "uid": 0,
+      "name": "lockdownd"
+    },
+    {
+      "pid": 71,
+      "ppid": 1,
+      "uid": 501,
+      "name": "sleepd"
+    },
+    {
+      "pid": 72,
+      "ppid": 1,
+      "uid": 501,
+      "name": "aggregated"
+    },
+    {
+      "pid": 73,
+      "ppid": 1,
+      "uid": 501,
+      "name": "OTACrashCopier"
+    },
+    {
+      "pid": 74,
+      "ppid": 1,
+      "uid": 241,
+      "name": "distnoted"
+    },
+    {
+      "pid": 75,
+      "ppid": 1,
+      "uid": 501,
+      "name": "ptpd"
+    },
+    {
+      "pid": 76,
+      "ppid": 1,
+      "uid": 0,
+      "name": "AppleCredentialM"
+    },
+    {
+      "pid": 77,
+      "ppid": 1,
+      "uid": 501,
+      "name": "navd"
+    },
+    {
+      "pid": 78,
+      "ppid": 1,
+      "uid": 501,
+      "name": "remindd"
+    },
+    {
+      "pid": 79,
+      "ppid": 1,
+      "uid": 0,
+      "name": "notifyd"
+    },
+    {
+      "pid": 80,
+      "ppid": 1,
+      "uid": 501,
+      "name": "rapportd"
+    },
+    {
+      "pid": 83,
+      "ppid": 1,
+      "uid": 501,
+      "name": "amsaccountsd"
+    },
+    {
+      "pid": 84,
+      "ppid": 1,
+      "uid": 25,
+      "name": "CommCenter"
+    },
+    {
+      "pid": 85,
+      "ppid": 1,
+      "uid": 0,
+      "name": "logd_helper"
+    },
+    {
+      "pid": 86,
+      "ppid": 1,
+      "uid": 0,
+      "name": "cfprefsd"
+    },
+    {
+      "pid": 87,
+      "ppid": 1,
+      "uid": 501,
+      "name": "chronod"
+    },
+    {
+      "pid": 88,
+      "ppid": 1,
+      "uid": 501,
+      "name": "ACCHWComponentAu"
+    },
+    {
+      "pid": 89,
+      "ppid": 1,
+      "uid": 501,
+      "name": "MobileGestaltHel"
+    },
+    {
+      "pid": 90,
+      "ppid": 1,
+      "uid": 501,
+      "name": "lsd"
+    },
+    {
+      "pid": 91,
+      "ppid": 1,
+      "uid": 501,
+      "name": "PowerUIAgent"
+    },
+    {
+      "pid": 92,
+      "ppid": 1,
+      "uid": 501,
+      "name": "com.apple.datami"
+    },
+    {
+      "pid": 93,
+      "ppid": 1,
+      "uid": 25,
+      "name": "awdd"
+    },
+    {
+      "pid": 94,
+      "ppid": 1,
+      "uid": 263,
+      "name": "analyticsd"
+    },
+    {
+      "pid": 96,
+      "ppid": 1,
+      "uid": 0,
+      "name": "ReportCrash"
+    },
+    {
+      "pid": 97,
+      "ppid": 1,
+      "uid": 501,
+      "name": "geod"
+    },
+    {
+      "pid": 98,
+      "ppid": 1,
+      "uid": 501,
+      "name": "coreduetd"
+    },
+    {
+      "pid": 99,
+      "ppid": 1,
+      "uid": 501,
+      "name": "PreBoard"
+    },
+    {
+      "pid": 100,
+      "ppid": 1,
+      "uid": 0,
+      "name": "mobileassetd"
+    },
+    {
+      "pid": 101,
+      "ppid": 1,
+      "uid": 501,
+      "name": "profiled"
+    },
+    {
+      "pid": 103,
+      "ppid": 1,
+      "uid": 276,
+      "name": "iconservicesagen"
+    },
+    {
+      "pid": 104,
+      "ppid": 1,
+      "uid": 0,
+      "name": "CAReportingServi"
+    },
+    {
+      "pid": 105,
+      "ppid": 1,
+      "uid": 501,
+      "name": "nsurlsessiond"
+    },
+    {
+      "pid": 106,
+      "ppid": 1,
+      "uid": 501,
+      "name": "apsd"
+    },
+    {
+      "pid": 107,
+      "ppid": 1,
+      "uid": 65,
+      "name": "mDNSResponder"
+    },
+    {
+      "pid": 108,
+      "ppid": 1,
+      "uid": 64,
+      "name": "securityd"
+    },
+    {
+      "pid": 109,
+      "ppid": 1,
+      "uid": 501,
+      "name": "clipserviced"
+    },
+    {
+      "pid": 110,
+      "ppid": 1,
+      "uid": 501,
+      "name": "budd"
+    },
+    {
+      "pid": 111,
+      "ppid": 1,
+      "uid": 501,
+      "name": "cloudd"
+    },
+    {
+      "pid": 112,
+      "ppid": 1,
+      "uid": 501,
+      "name": "xpcproxy"
+    },
+    {
+      "pid": 113,
+      "ppid": 1,
+      "uid": 501,
+      "name": "findmydeviced"
+    },
+    {
+      "pid": 114,
+      "ppid": 1,
+      "uid": 0,
+      "name": "corecaptured"
+    },
+    {
+      "pid": 116,
+      "ppid": 1,
+      "uid": 501,
+      "name": "dasd"
+    },
+    {
+      "pid": 117,
+      "ppid": 1,
+      "uid": 0,
+      "name": "nehelper"
+    },
+    {
+      "pid": 118,
+      "ppid": 1,
+      "uid": 501,
+      "name": "misagent"
+    },
+    {
+      "pid": 120,
+      "ppid": 1,
+      "uid": 501,
+      "name": "CommCenterMobile"
+    },
+    {
+      "pid": 121,
+      "ppid": 1,
+      "uid": 0,
+      "name": "SCHelper"
+    },
+    {
+      "pid": 122,
+      "ppid": 1,
+      "uid": 33,
+      "name": "installd"
+    },
+    {
+      "pid": 123,
+      "ppid": 1,
+      "uid": 501,
+      "name": "networkservicepr"
+    },
+    {
+      "pid": 125,
+      "ppid": 1,
+      "uid": 0,
+      "name": "ospredictiond"
+    },
+    {
+      "pid": 126,
+      "ppid": 1,
+      "uid": 0,
+      "name": "WiFiCloudAssetsX"
+    },
+    {
+      "pid": 128,
+      "ppid": 1,
+      "uid": 501,
+      "name": "followupd"
+    },
+    {
+      "pid": 130,
+      "ppid": 1,
+      "uid": 501,
+      "name": "rtcreportingd"
+    },
+    {
+      "pid": 131,
+      "ppid": 1,
+      "uid": 501,
+      "name": "callservicesd"
+    },
+    {
+      "pid": 132,
+      "ppid": 1,
+      "uid": 501,
+      "name": "mobileactivation"
+    },
+    {
+      "pid": 135,
+      "ppid": 1,
+      "uid": 501,
+      "name": "donotdisturbd"
+    },
+    {
+      "pid": 136,
+      "ppid": 1,
+      "uid": 0,
+      "name": "pfd"
+    },
+    {
+      "pid": 137,
+      "ppid": 1,
+      "uid": 0,
+      "name": "CloudKeychainPro"
+    },
+    {
+      "pid": 138,
+      "ppid": 1,
+      "uid": 0,
+      "name": "com.apple.Mobile"
+    },
+    {
+      "pid": 139,
+      "ppid": 1,
+      "uid": 501,
+      "name": "syncdefaultsd"
+    },
+    {
+      "pid": 141,
+      "ppid": 1,
+      "uid": 501,
+      "name": "accountsd"
+    },
+    {
+      "pid": 142,
+      "ppid": 1,
+      "uid": 501,
+      "name": "SpringBoard"
+    },
+    {
+      "pid": 145,
+      "ppid": 1,
+      "uid": 0,
+      "name": "DumpPanic"
+    },
+    {
+      "pid": 146,
+      "ppid": 1,
+      "uid": 501,
+      "name": "mediaserverd"
+    },
+    {
+      "pid": 147,
+      "ppid": 1,
+      "uid": 0,
+      "name": "thermalmonitord"
+    }
+  ]
+}

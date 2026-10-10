@@ -1,3 +1,24 @@
+## Confirmed original SpringBoard and backboardd process milestone
+
+Run 38092985645 (c29e545) captures original backboardd PID 61 / UID 501
+and SpringBoard PID 142 / UID 501 after 300 seconds. Both are real process
+names in the stopped original kernel hash, not xpcproxy labels, artificial
+launch records or UI placeholders. There are 103 processes, 475,068 EL0
+returns, all 22 early boot tasks complete, and no captured kernel panic.
+containermanager's previously blocked worker now has an ordinary workqueue
+continuation. The exact reproducible profile is sep_manager_probe=
+disabled-aks-root-unsupported with the existing explicit FastSim/unsealed/
+keybag diagnostics. All three security-related experiments remain disclosed;
+this is not authenticated iPod boot or functioning SEP/data protection.
+
+The process milestone is achieved. Visible SpringBoard, display scanout,
+interaction and sustained service health remain unconfirmed. SpringBoard's
+threads are runnable at the final snapshot; presence does not prove its
+initialization is complete. A compact read-only PID/name evidence report is
+preserved at docs/evidence/desktop-processes-38092985645.json; the complete
+bounded runtime diagnostics remain in the run's full-system-boot-evidence
+artifact. 147 host tests passed before dispatch and in CI.
+
 ## Disabled-AKS removes the first lock; platform SecureRoot now blocks
 
 Run 38091845866 (74e05ae) validates the explicit disabled-AKS manager alias:
